@@ -2,7 +2,7 @@
 
 A Retrieval-Augmented Generation (RAG) application that allows users to upload PDF documents and ask questions about their content. The application extracts text from PDFs, creates embeddings for efficient search, and uses an LLM to generate accurate answers based on the document's content.
 
-istant Screenshot](https://via.placeholder.com/800x450)
+![Interface](https://github.com/user-attachments/assets/54cad5ad-8fa4-49fc-b2a0-3b283f0028c5)
 
 ## Features
 
