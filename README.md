@@ -2,7 +2,7 @@
 
 A Retrieval-Augmented Generation (RAG) application that allows users to upload PDF documents and ask questions about their content. The application extracts text from PDFs, creates embeddings for efficient search, and uses an LLM to generate accurate answers based on the document's content.
 
-![PDF Query Assistant Screenshot](https://via.placeholder.com/800x450)
+istant Screenshot](https://via.placeholder.com/800x450)
 
 ## Features
 
