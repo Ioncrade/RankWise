@@ -79,50 +79,83 @@ def store_embeddings_in_faiss(docs):
     except Exception as e:
         return False, f"Error storing embeddings: {e}"
 
-def search_rerank_and_answer(query):
-    """Search FAISS, rerank results, and generate response using Groq."""
-    if not os.path.exists(FAISS_INDEX_PATH) or not os.path.exists(METADATA_PATH):
+def multi_hop_search_rerank_and_answer(query, faiss_index_path=FAISS_INDEX_PATH, metadata_path=METADATA_PATH,top_k=5):
+    
+
+    if not os.path.exists(faiss_index_path) or not os.path.exists(metadata_path):
         return "Please upload a PDF first."
 
     try:
-        # Load FAISS index and metadata
-        index = faiss.read_index(FAISS_INDEX_PATH)
-        with open(METADATA_PATH, "rb") as f:
+        
+        index = faiss.read_index(faiss_index_path)
+        with open(metadata_path, "rb") as f:
             text_chunks = pickle.load(f)
 
-        # Encode and normalize query
-        query_embedding = embed_model.encode([query], convert_to_numpy=True)
-        query_embedding = query_embedding / np.linalg.norm(query_embedding)
+        def retrieve_context(input_query):
+            
+            query_embedding = embed_model.encode([input_query], convert_to_numpy=True)
+            query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-        # Search FAISS
-        k = min(10, len(text_chunks))  # Make sure k isn't larger than our index
-        distances, indices = index.search(query_embedding, k)
-        retrieved_chunks = [text_chunks[idx] for idx in indices[0]]
+            distances, indices = index.search(query_embedding, top_k)
+            retrieved_chunks = [text_chunks[idx] for idx in indices[0]]
 
-        # Rerank
-        rerank_pairs = [[query, chunk] for chunk in retrieved_chunks]
-        scores = reranker.predict(rerank_pairs)
-        ranked_results = sorted(zip(retrieved_chunks, scores), key=lambda x: x[1], reverse=True)
-        top_chunks = [chunk for chunk, _ in ranked_results[:3]]
+            
+            rerank_pairs = [[input_query, chunk] for chunk in retrieved_chunks]
+            scores = reranker.predict(rerank_pairs)
 
-        # Create context and query Groq
-        context = "\n\n".join(top_chunks)
+           
+            ranked_results = sorted(zip(retrieved_chunks, scores), key=lambda x: x[1], reverse=True)
+            top_chunks = [chunk for chunk, _ in ranked_results[:5]]  # Take top 3
+
+          
+            return "\n\n".join(top_chunks)
+
+        initial_context = retrieve_context(query)
+
         client = Groq(api_key=GROQ_API_KEY)
+
+        followup_prompt = (
+            "Based on the following context extracted from a document, generate a clarifying query "
+            "or specify additional details needed to answer the user's question more completely.\n\n"
+            f"Context: {initial_context}\n\n"
+            f"User Query: {query}\n\n"
+            "Clarifying Query:"
+        )
+
+        followup_response = client.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates clarifying queries to enhance information retrieval."},
+                {"role": "user", "content": followup_prompt}
+            ],
+        )
+        followup_query = followup_response.choices[0].message.content.strip()
+
+        additional_context = retrieve_context(followup_query)
+
+        combined_context = initial_context + "\n\n" + additional_context
+
         system_prompt = (
             "You are an AI assistant answering questions based on a PDF document. "
             "Use the provided text context to generate an accurate response. "
+            "Generate a long elaborated answer with respect to context so that the user understands it better. "
             "If the answer is not in the context, say 'I couldn't find an answer in the document.'"
         )
-        response = client.chat.completions.create(
+
+        # Final answer generation using the combined context
+        final_response = client.chat.completions.create(
             model="gemma2-9b-it",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Context: {context}\n\nUser Query: {query}"}
-            ]
+                {"role": "user", "content": f"Context: {combined_context}\n\nUser Query: {query}"}
+            ],
         )
-        answer = response.choices[0].message.content
+
+        # Return the generated answer
+        answer = final_response.choices[0].message.content
         previous_responses.append({'query': query, 'answer': answer})
         return answer
+
     except Exception as e:
         return f"Error processing query: {str(e)}"
 
