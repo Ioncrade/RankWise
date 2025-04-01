@@ -6,20 +6,35 @@ A Retrieval-Augmented Generation (RAG) application that allows users to upload P
 
 ## Features
 
-- 📄 PDF upload and processing
-- 🔍 Semantic search using FAISS vector database
-- 🤖 Natural language question answering with Groq's LLM
-- 📊 Response history tracking
-- 💻 Clean, responsive user interface
+- **PDF Upload & Processing**:  
+  Extracts text from PDF documents, splits it into manageable chunks, and creates embeddings for each chunk.
+  
+- **Hybrid Search**:  
+  Combines **Dense Passage Retrieval** (using transformer-based embeddings) with **Semantic Search** to locate relevant text sections.
+  
+- **Re-Ranking**:  
+  Uses a CrossEncoder to re-rank retrieved results, ensuring that the most relevant passages are selected.
+  
+- **Chained Retrieval & Generation**:  
+  Implements multi-step reasoning by first retrieving context, generating follow-up queries, and retrieving additional information to build a richer context.
+  
+- **Multi-Hop Question Answering**:  
+  Allows logical connections across multiple document sections for complex queries, enabling accurate and nuanced answers.
+  
+- **Response History Tracking**:  
+  Keeps track of previous queries and answers for reference.
 
 ## Architecture
 
 This application consists of two main components:
 
-1. **Flask Backend**: Handles PDF processing, vector search, and LLM integration
-2. **React Frontend**: Provides an intuitive user interface
+1. **Flask Backend**:  
+   Handles PDF processing, vector search, and LLM integration.
+   
+2. **React Frontend**:  
+   Provides an intuitive and responsive user interface.
 
-### Technical Stack
+## Technical Stack
 
 - **Backend**:
   - Flask (Python web framework)
@@ -27,7 +42,8 @@ This application consists of two main components:
   - FAISS (for vector search)
   - PyMuPDF (for PDF text extraction)
   - Groq API (for LLM capabilities)
-
+  - CrossEncoder (for result re-ranking)
+  
 - **Frontend**:
   - React (JavaScript library)
   - React Icons (for UI elements)
@@ -83,15 +99,15 @@ This application consists of two main components:
    ```bash
    python app.py
    ```
-   This will start the Flask server at http://localhost:5000
+   This will start the Flask server at [http://localhost:5000](http://localhost:5000).
 
 2. In a separate terminal, start the React frontend (from the frontend directory):
    ```bash
    npm start
    ```
-   This will start the React development server at http://localhost:3000
+   This will start the React development server at [http://localhost:3000](http://localhost:3000).
 
-3. Open your browser and navigate to http://localhost:3000
+3. Open your browser and navigate to [http://localhost:3000](http://localhost:3000).
 
 ### Production Deployment
 
@@ -112,38 +128,43 @@ This application consists of two main components:
    python app.py
    ```
 
-4. Access the application at http://localhost:5000
+4. Access the application at [http://localhost:5000](http://localhost:5000).
 
 ## Usage Guide
 
 1. **Upload a PDF**:
-   - Click on the upload area or drag and drop a PDF file
-   - Click the "Upload PDF" button
-   - Wait for processing to complete
+   - Click on the upload area or drag and drop a PDF file.
+   - Click the "Upload PDF" button.
+   - Wait for processing to complete.
 
 2. **Ask Questions**:
-   - Type your question about the PDF content in the input field
-   - Click the send button or press Enter
-   - View the AI-generated answer
+   - Type your question about the PDF content in the input field.
+   - Click the send button or press Enter.
+   - View the AI-generated answer that leverages hybrid search, re-ranking, chained retrieval and generation, and multi-hop reasoning.
 
 3. **Review History**:
-   - Scroll down to see previous questions and answers
-   - Click "Clear" to reset the conversation
+   - Scroll down to see previous questions and answers.
+   - Click "Clear" to reset the conversation.
 
 ## How It Works
 
 1. **PDF Processing Pipeline**:
-   - Text extraction from PDF
-   - Chunking text into smaller segments
-   - Generating embeddings for each text chunk
-   - Storing embeddings in a FAISS vector database
+   - Extracts text from the PDF and splits it into chunks.
+   - Generates dense embeddings for each text chunk.
+   - Stores embeddings in a FAISS vector database for fast retrieval.
 
 2. **Query Processing**:
-   - Embedding the user query
-   - Semantic search in the vector database
-   - Reranking search results
-   - Constructing context from top results
-   - Generating an answer using Groq's LLM
+   - **Hybrid Search**:  
+     Combines dense passage retrieval and semantic search to retrieve relevant document segments.
+   - **Re-Ranking**:  
+     Uses a CrossEncoder to rank the retrieved segments by relevance.
+   - **Chained Retrieval & Generation**:  
+     Generates follow-up queries based on initial retrieval, retrieves additional context, and chains results together.
+   - **Multi-Hop Question Answering**:  
+     Synthesizes the multiple context rounds to provide a detailed and accurate answer.
+
+3. **Final Answer Generation**:
+   - Uses Groq's LLM to generate comprehensive answers from the combined context.
 
 ## Project Structure
 
@@ -168,16 +189,20 @@ pdf-query-assistant/
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'Add some amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
 
 ## Acknowledgments
 
-- [Sentence-Transformers](https://www.sbert.net/) for the embedding models
-- [FAISS](https://github.com/facebookresearch/faiss) for efficient similarity search
-- [Groq](https://groq.com/) for the LLM API
-- [PyMuPDF](https://github.com/pymupdf/PyMuPDF) for PDF processing
-- [React](https://reactjs.org/) for the frontend framework
+- [Sentence-Transformers](https://www.sbert.net/) for the embedding models.
+- [FAISS](https://github.com/facebookresearch/faiss) for efficient similarity search.
+- [Groq](https://groq.com/) for the LLM API.
+- [PyMuPDF](https://github.com/pymupdf/PyMuPDF) for PDF processing.
+- [React](https://reactjs.org/) for the frontend framework.
+
+---
+
+This updated README now emphasizes the sophisticated features of the RAG system—highlighting its hybrid search, re-ranking, chained retrieval and generation, and multi-hop question answering capabilities for generating accurate answers from uploaded PDFs.
