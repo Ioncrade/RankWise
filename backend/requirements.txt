@@ -1,7 +1,2 @@
-flask 
-pymupdf 
-faiss-cpu 
-sentence-transformers 
-langchain 
-dotenv 
-groq
+# Compatibility install. The canonical dependency definition and lock are at the repository root.
+-e ..[ml,science,chemistry]
