@@ -1,0 +1,5 @@
+{"question_id":"collection-001","query":"How does chlorophyll relate to photosynthesis?","relevant_locations":["biology.pdf#1"],"slice":"rare-term"}
+{"question_id":"collection-002","query":"What equation relates force, mass, and acceleration?","relevant_locations":["mechanics.pdf#1"],"slice":"equation-text"}
+{"question_id":"collection-003","query":"How do atoms form chemical bonds?","relevant_locations":["chemistry.pdf#1"],"slice":"prose"}
+{"question_id":"collection-004","query":"What can moving tectonic plates cause?","relevant_locations":["earth.pdf#1"],"slice":"prose"}
+{"question_id":"collection-005","query":"Can energy change form while remaining conserved?","relevant_locations":["energy.pdf#1"],"slice":"prose"}

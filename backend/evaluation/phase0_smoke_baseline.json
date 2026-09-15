@@ -1,0 +1,20 @@
+{
+  "kind": "deterministic_harness_smoke_not_product_benchmark",
+  "recorded_at": "2026-09-12",
+  "corpus": "create_sample_pdf.py (3 pages)",
+  "questions": "sample_questions.jsonl (3 questions)",
+  "document_version_id": "dv_bd3710864ca3383a87f08b70",
+  "retrieval": {
+    "embedder": "tests.fakes.HashingEmbedder",
+    "reranker": "tests.fakes.LexicalReranker",
+    "index": "faiss-cpu 1.15.0 IndexFlatIP"
+  },
+  "metrics": {
+    "k": 1,
+    "case_count": 3,
+    "hit_rate": 1.0,
+    "recall": 1.0,
+    "mrr": 1.0
+  },
+  "interpretation": "This verifies the evaluation and persistence path only. It is not evidence of production retrieval quality."
+}

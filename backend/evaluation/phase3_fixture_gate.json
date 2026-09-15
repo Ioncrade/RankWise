@@ -1,0 +1,16 @@
+{
+  "kind": "deterministic_phase3_fixture_gate_not_product_benchmark",
+  "recorded_at": "2026-09-13",
+  "gates": {
+    "atom_balancing_and_grouped_formulas": "passed",
+    "states_and_original_reaction_preservation": "passed",
+    "failed_balance_never_marked_verified": "passed",
+    "canonical_molecule_identity_and_descriptors": "passed with RDKit",
+    "external_lookup_explicit_consent": "passed",
+    "external_lookup_source_timestamp_and_tenant_cache": "passed with injected PubChem response",
+    "reaction_sheet_verified_annotation": "passed",
+    "flashcard_and_practice_question_artifacts": "passed",
+    "hazardous_procedural_regeneration": "blocked"
+  },
+  "interpretation": "These deterministic fixtures test chemistry tool and artifact boundaries. They do not measure extraction recall on a reviewed chemistry corpus, mechanism understanding, factuality of a live external service, or educational quality."
+}

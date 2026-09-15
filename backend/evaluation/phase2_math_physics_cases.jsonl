@@ -1,0 +1,4 @@
+{"case_id":"math-equivalence-001","slice":"symbolic_equivalence","tool":"math","input":{"operation":"compare","expression":"(x + 1)^2","other_expression":"x^2 + 2*x + 1","variables":["x"]},"expected":{"equivalent":true}}
+{"case_id":"math-derivative-001","slice":"calculus","tool":"math","input":{"operation":"differentiate","expression":"x^3 + 2*x","variables":["x"]},"expected":{"result":"3*x**2 + 2"}}
+{"case_id":"physics-unit-001","slice":"unit_conversion","tool":"units","input":{"value":1000,"from_unit":"meter","to_unit":"kilometer"},"expected":{"output_value":1.0}}
+{"case_id":"physics-plot-001","slice":"bounded_plot","tool":"plot","input":{"expression":"sin(x)","variable":"x","start":-3.14,"end":3.14,"samples":200},"expected":{"png":true}}

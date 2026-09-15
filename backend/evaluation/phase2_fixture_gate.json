@@ -1,0 +1,17 @@
+{
+  "kind": "deterministic_phase2_fixture_gate_not_product_benchmark",
+  "recorded_at": "2026-09-12",
+  "gates": {
+    "selective_ocr_decision_and_provenance": "passed with injected deterministic OCR text page",
+    "live_tesseract_ocr": "blocked on this host because sudo requires an interactive password",
+    "native_equation_region_extraction": "passed",
+    "native_table_region_extraction": "passed",
+    "authorized_full_page_and_region_rendering": "passed",
+    "standalone_image_storage_and_search_path": "passed with injected deterministic OCR text page",
+    "symbolic_equivalence_and_calculus": "passed",
+    "unit_conversion_and_dimension_errors": "passed",
+    "bounded_plot_png": "passed",
+    "formula_sheet_tool_observations": "passed"
+  },
+  "interpretation": "These fixtures verify deterministic behavior and integration boundaries. They do not measure real OCR character error rate, equation OCR accuracy, or production note quality."
+}
