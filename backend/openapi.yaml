@@ -1,0 +1,537 @@
+openapi: 3.1.0
+info:
+  title: RankWise Backend API
+  version: 3.0.0-phase3
+  description: Multi-source grounded notes, study artifacts, and bounded science/chemistry tools.
+servers:
+  - url: http://127.0.0.1:5000
+paths:
+  /v1/collections:
+    post:
+      summary: Create a tenant-scoped collection
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: {type: string}
+                subject: {type: string, default: general_science}
+                education_level: {type: string, default: undergraduate}
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Collection'}
+        '400': {$ref: '#/components/responses/Error'}
+    get:
+      summary: List collections visible to the tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant-scoped collection list
+  /v1/collections/{collection_id}:
+    get:
+      summary: Fetch a collection and its ready document versions
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      responses:
+        '200': {description: Collection details}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/collections/{collection_id}/documents:
+    post:
+      summary: Queue one or more PDF ingestion jobs
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  maxItems: 20
+                  items: {type: string, format: binary}
+      responses:
+        '202':
+          description: One durable job record per accepted file
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+        '413': {$ref: '#/components/responses/Error'}
+  /v1/collections/{collection_id}/queries:
+    post:
+      summary: Ask a grounded question across an authorized document scope
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: {type: string, maxLength: 5000}
+                document_version_ids:
+                  type: array
+                  items: {type: string}
+                generation_provider:
+                  type: string
+                  enum: [auto, groq, ollama]
+      responses:
+        '200':
+          description: Grounded answer, validated citations, and retrieved evidence
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/collections/{collection_id}/images:
+    post:
+      summary: Queue standalone-image ingestion and selective OCR
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [images]
+              properties:
+                images:
+                  type: array
+                  maxItems: 20
+                  items: {type: string, format: binary}
+      responses:
+        '202': {description: One image-ingestion job per accepted image}
+        '400': {$ref: '#/components/responses/Error'}
+  /v1/collections/{collection_id}/notes:
+    post:
+      summary: Queue a structured note-generation job
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: {type: string}
+                profile:
+                  type: string
+                  enum:
+                    - comprehensive
+                    - concise
+                    - formula_sheet
+                    - reaction_sheet
+                    - flashcards
+                    - practice_questions
+                document_version_ids:
+                  type: array
+                  items: {type: string}
+                generation_provider:
+                  type: string
+                  enum: [auto, groq, ollama]
+      responses:
+        '202':
+          description: Note job accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Job'}
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/collections/{collection_id}/artifacts:
+    post:
+      summary: Queue a reaction sheet, flashcard set, or practice-question artifact
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, type]
+              properties:
+                title: {type: string}
+                type:
+                  type: string
+                  enum: [reaction_sheet, flashcards, practice_questions]
+                document_version_ids:
+                  type: array
+                  items: {type: string}
+                generation_provider:
+                  type: string
+                  enum: [auto, groq, ollama]
+      responses:
+        '202':
+          description: Study-artifact job accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Job'}
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/jobs/{job_id}:
+    get:
+      summary: Fetch tenant-scoped job state
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: job_id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Current job state
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Job'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/notes/{note_id}:
+    get:
+      summary: Fetch the current immutable note version
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/NoteId'
+      responses:
+        '200': {description: Current structured note and Markdown rendering}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/notes/{note_id}/versions:
+    get:
+      summary: List immutable versions of a note
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/NoteId'
+      responses:
+        '200': {description: Newest-first note version list}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/notes/{note_id}/export.md:
+    get:
+      summary: Download the current note as Markdown
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/NoteId'
+      responses:
+        '200':
+          description: Markdown attachment with resolvable evidence links
+          content:
+            text/markdown:
+              schema: {type: string}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/notes/{note_id}/sections/{section_id}/regenerate:
+    post:
+      summary: Queue regeneration of one section into a new note version
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/NoteId'
+        - name: section_id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instruction: {type: string, maxLength: 2000}
+                generation_provider:
+                  type: string
+                  enum: [auto, groq, ollama]
+      responses:
+        '202':
+          description: Regeneration job accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Job'}
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/evidence/{evidence_id}:
+    get:
+      summary: Resolve authorized evidence to its exact stored chunk
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: evidence_id
+          in: path
+          required: true
+          schema: {type: string}
+        - name: document_version_id
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Evidence text and page provenance}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/providers:
+    get:
+      summary: Report configured generation providers and local-model readiness
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Provider configuration and model availability without secrets
+        '400': {$ref: '#/components/responses/Error'}
+  /v1/evidence/{evidence_id}/render:
+    get:
+      summary: Render the authorized evidence bounding box as PNG
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: evidence_id
+          in: path
+          required: true
+          schema: {type: string}
+        - name: document_version_id
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Evidence region PNG
+          content:
+            image/png:
+              schema: {type: string, format: binary}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/documents/{document_version_id}/pages/{page_number}/render:
+    get:
+      summary: Render an authorized full page or bounded region
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: document_version_id
+          in: path
+          required: true
+          schema: {type: string}
+        - name: page_number
+          in: path
+          required: true
+          schema: {type: integer, minimum: 1}
+        - name: dpi
+          in: query
+          schema: {type: integer, minimum: 72, maximum: 300, default: 144}
+        - {name: x0, in: query, schema: {type: number}}
+        - {name: y0, in: query, schema: {type: number}}
+        - {name: x1, in: query, schema: {type: number}}
+        - {name: y1, in: query, schema: {type: number}}
+      responses:
+        '200':
+          description: Page or region PNG
+          content:
+            image/png:
+              schema: {type: string, format: binary}
+        '400': {$ref: '#/components/responses/Error'}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/images/{image_id}/source:
+    get:
+      summary: Fetch an authorized original image
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: image_id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Original image bytes}
+        '404': {$ref: '#/components/responses/Error'}
+  /v1/tools/math:
+    post:
+      summary: Run bounded symbolic simplification, comparison, calculus, or solving
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operation, expression, variables]
+              properties:
+                operation:
+                  type: string
+                  enum: [simplify, compare, differentiate, integrate, solve]
+                expression: {type: string, maxLength: 500}
+                other_expression: {type: string, maxLength: 500}
+                variables:
+                  type: array
+                  maxItems: 10
+                  items: {type: string}
+                variable: {type: string}
+      responses:
+        '200': {description: Versioned deterministic symbolic result}
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /v1/tools/units/convert:
+    post:
+      summary: Convert compatible physical units with dimensional validation
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value, from_unit, to_unit]
+              properties:
+                value: {type: number}
+                from_unit: {type: string, maxLength: 100}
+                to_unit: {type: string, maxLength: 100}
+      responses:
+        '200': {description: Versioned unit result}
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /v1/tools/plot:
+    post:
+      summary: Render a bounded single-variable function as PNG
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expression]
+              properties:
+                expression: {type: string, maxLength: 500}
+                variable: {type: string, default: x}
+                start: {type: number, default: -10}
+                end: {type: number, default: 10}
+                samples: {type: integer, minimum: 50, maximum: 2000, default: 500}
+      responses:
+        '200':
+          description: Generated plot
+          content:
+            image/png:
+              schema: {type: string, format: binary}
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /v1/tools/chemistry/balance:
+    post:
+      summary: Deterministically derive and verify atom/charge-balanced coefficients
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [equation]
+              properties:
+                equation: {type: string, maxLength: 500}
+      responses:
+        '200':
+          description: Original equation and separately labeled verified calculation
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /v1/tools/chemistry/molecule:
+    post:
+      summary: Validate SMILES/InChI and calculate canonical identifiers and descriptors
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notation]
+              properties:
+                notation: {type: string, maxLength: 500}
+                format: {type: string, enum: [smiles, inchi], default: smiles}
+      responses:
+        '200': {description: RDKit-calculated molecule analysis}
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /v1/tools/chemistry/lookup:
+    post:
+      summary: Opt-in, cached PubChem entity enrichment
+      description: Results are explicitly marked external and include source and retrieval time.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query, consent]
+              properties:
+                query: {type: string, maxLength: 200}
+                consent: {type: boolean, const: true}
+      responses:
+        '200': {description: Labeled external PubChem properties with cache provenance}
+        '400': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+components:
+  parameters:
+    TenantId:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      description: Trusted tenant identity supplied by an authentication gateway.
+      schema: {type: string, maxLength: 100}
+    CollectionId:
+      name: collection_id
+      in: path
+      required: true
+      schema: {type: string}
+    NoteId:
+      name: note_id
+      in: path
+      required: true
+      schema: {type: string}
+  schemas:
+    Collection:
+      type: object
+      required: [collection_id, tenant_id, title, subject, education_level, created_at]
+      properties:
+        collection_id: {type: string}
+        tenant_id: {type: string}
+        title: {type: string}
+        subject: {type: string}
+        education_level: {type: string}
+        created_at: {type: string, format: date-time}
+    Job:
+      type: object
+      required: [job_id, kind, status, payload, created_at, updated_at]
+      properties:
+        job_id: {type: string}
+        kind: {type: string}
+        status: {type: string, enum: [queued, running, succeeded, failed]}
+        payload: {type: object}
+        result: {type: [object, 'null']}
+        error: {type: [object, 'null']}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+  responses:
+    Error:
+      description: Typed error envelope
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, error]
+            properties:
+              success: {const: false}
+              error:
+                type: object
+                required: [code, message, details]
+                properties:
+                  code: {type: string}
+                  message: {type: string}
+                  details: {type: object}
